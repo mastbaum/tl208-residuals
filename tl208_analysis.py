@@ -9,15 +9,15 @@ import pdf
 import lratio
 
 pdf_mc = {
-    'tl208': glob('/home/mastbaum/snoplus/tl208/data/pdf/tl208/run1/av_tl208-*0.root'),# +
-             #glob('/mnt/dropbox/jail/home/dropbox/mastbaum/run*/av_tl208-*.root'),
-    'dbd': glob('/home/mastbaum/snoplus/tl208/data/pdf/dbd/dbd_*0.root')
+    'tl208': glob('/home/mastbaum/snoplus/tl208/data/pdf/tl208/run*/av_tl208*.root') +
+             glob('/mnt/dropbox/jail/home/dropbox/mastbaum/run*/av_tl208-*.root'),
+    'dbd': glob('/home/mastbaum/snoplus/tl208/data/pdf/dbd/dbd*.root')
 }
 
 data_mc = {
-    'tl208': glob('/home/mastbaum/snoplus/tl208/data/fakedata/av_tl208_*0.root'), #+
-          #   glob('/mnt/dropbox/jail/home/dropbox/mastbaum/av_tl208_*.root'),
-    'dbd': glob('/home/mastbaum/snoplus/tl208/data/fakedata/dbd_*0.root')
+    'tl208': glob('/home/mastbaum/snoplus/tl208/data/fakedata/av_tl208*.root') +
+             glob('/mnt/dropbox/jail/home/dropbox/mastbaum/av_tl208*.root'),
+    'dbd': glob('/home/mastbaum/snoplus/tl208/data/fakedata/dbd_*.root')
 }
 
 class LRF:
@@ -82,12 +82,18 @@ def main(cut_list, nprocs=2, load_pdfs=True):
 
 if __name__ == '__main__':
     cut_list = [
-        util.Cut(e=(2,3), r=(5400,5500), t=(-50,50))
+        util.Cut(e=(2,3), r=(5100,5200), t=(-50,50)),
+        util.Cut(e=(2,3), r=(5200,5300), t=(-50,50)),
+        util.Cut(e=(2,3), r=(5300,5400), t=(-50,50)),
+        util.Cut(e=(2,3), r=(5400,5500), t=(-50,50)),
+        util.Cut(e=(2,3), r=(0,4000), t=(-50,50)),
+        util.Cut(e=(2,3), r=(0,4500), t=(-50,50)),
+        util.Cut(e=(2,3), r=(0,5000), t=(-50,50))
     ]
 
     nprocs = int(sys.argv[1] if len(sys.argv)>1 else 2)
 
-    main(cut_list, nprocs=nprocs, load_pdfs=True)
+    main(cut_list, nprocs=nprocs, load_pdfs=False)
 
 #for cut in e_tl:
 #    e_cut_bin = np.abs(e_tl-cut).argmin()

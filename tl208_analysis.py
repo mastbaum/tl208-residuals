@@ -42,22 +42,25 @@ class LRF:
         return lratio.extract(filename, pdf_tl=self.pdf_tl, pdf_db=self.pdf_db, cut=self.cut)
 
 
-def main(cut_list, nprocs=2, load_pdfs=True):
+def main(cut_list, nprocs=2):
     for cut in cut_list:
         suffix = cut.as_suffix()
 
         # load or build pdfs
-        if load_pdfs:
-            print 'loading pdfs'
+        try:
+            print 'loading tl pdf'
             pdf_tl = util.load_pdf('pdfs/pdf_tl208%s.pickle' % suffix)
-            pdf_db = util.load_pdf('pdfs/pdf_dbd%s.pickle' % suffix)
-        else:
+        except Exception:
             print 'building tl208 pdf'
             pdf_tl = pdf.make(pdf_mc['tl208'], nprocs=nprocs, cut=cut)
             with open('pdfs/pdf_tl208%s.pickle' % suffix, 'w') as f:
                 pickle.dump(pdf_tl, f)
             pdf.plot(pdf_tl, cut=cut, suffix='_tl208'+suffix)
 
+        try:
+            print 'loading 0vbb pdf'
+            pdf_db = util.load_pdf('pdfs/pdf_dbd%s.pickle' % suffix)
+        except Exception:
             print 'building 0vbb pdf'
             pdf_db = pdf.make(pdf_mc['dbd'], nprocs=nprocs, cut=cut)
             with open('pdfs/pdf_dbd%s.pickle' % suffix, 'w') as f:
@@ -93,7 +96,7 @@ if __name__ == '__main__':
 
     nprocs = int(sys.argv[1] if len(sys.argv)>1 else 2)
 
-    main(cut_list, nprocs=nprocs, load_pdfs=False)
+    main(cut_list, nprocs=nprocs)
 
 #for cut in e_tl:
 #    e_cut_bin = np.abs(e_tl-cut).argmin()

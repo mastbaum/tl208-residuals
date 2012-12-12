@@ -56,7 +56,15 @@ def extract(filename, pdf_tl, pdf_db, cut=None):
     lratios = []
     for i in range(t.GetEntries()):
         t.GetEntry(i)
-        if ds.GetEVCount() > 0 and ds.GetEV(0).GetFitResult('scintFitter').GetValid():
+        if ds.GetEVCount() > 0:
+            try:
+                fitter_valid = ds.GetEV(0).GetFitResult('scintFitter').GetValid()
+            except Exception:
+                fitter_valid = False
+
+            if not fitter_valid:
+                continue
+
             v = ds.GetEV(0).GetFitResult('scintFitter').GetVertex(0)
             fit_t = v.GetTime()
             fit_e = v.GetEnergy()

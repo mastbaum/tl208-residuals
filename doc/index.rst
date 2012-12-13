@@ -17,6 +17,11 @@ Likelihood ratio distributions for cuts at several radii may then be analyzed
 to choose a fiducial volume cut that balances the leaked backgrounds with the
 irreducible 8B neutrino scatters.
 
+.. note::
+
+   For a detailed explanation of the theory, analysis, and results, see
+   :download:`the full report <../report/tl208.pdf>`.
+
 Usage
 -----
 To perform the full analysis, run::

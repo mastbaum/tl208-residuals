@@ -60,7 +60,7 @@ def flatten(l):
             yield el
 
 
-def plot_pdf_overlay(tlpath, dbpath, suffix='', show=False):
+def plot_pdf_overlay(tlpath, dbpath, suffix='', rebin=None, show=False):
     '''Plot two PDFs overlaid.
 
     Produces "figures/pdfs[suffix].pdf".
@@ -70,7 +70,7 @@ def plot_pdf_overlay(tlpath, dbpath, suffix='', show=False):
     :param suffix: Appended to output files
     :param show: If True, show the plot
     '''
-    import pickle
+    import pdf
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
@@ -82,12 +82,21 @@ def plot_pdf_overlay(tlpath, dbpath, suffix='', show=False):
     with open(dbpath) as f:
         db = pickle.load(f)
 
+    if rebin is not None:
+        tl_x = pdf.rebin(tl[:,0], rebin, trim=True)
+        tl_y = pdf.rebin(tl[:,1], rebin, trim=True)
+        tl = np.array([tl_x, tl_y])
+
+        db_x = pdf.rebin(db[:,0], rebin, trim=True)
+        db_y = pdf.rebin(db[:,1], rebin, trim=True)
+        db = np.array([db_x, db_y])
+
     f = plt.figure(1, facecolor='white')
 
-    plt.semilogy(tl[:,0], tl[:,1], color='blue', linewidth=2, label='$^{208}$Tl MC')
-    plt.semilogy(db[:,0], db[:,1], color='red', linewidth=2, label='$0\\nu\\beta\\beta$ MC')
+    plt.semilogy(tl[0], tl[1], color='blue', linewidth=2, label='$^{208}$Tl MC')
+    plt.semilogy(db[0], db[1], color='red', linewidth=2, label='$0\\nu\\beta\\beta$ MC')
 
-    bin_width = np.diff(tl[:,0])[0]
+    bin_width = np.diff(tl[0])[0]
     plt.xlabel('Time residual (ns)')
     plt.ylabel('Normalized counts per %f ns bin' % bin_width)
     plt.legend(loc='upper left')
@@ -96,4 +105,6 @@ def plot_pdf_overlay(tlpath, dbpath, suffix='', show=False):
 
     if show:
         plt.show()
+
+    plt.clf()
 

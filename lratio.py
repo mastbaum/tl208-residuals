@@ -100,7 +100,7 @@ def extract(filename, pdf_tl, pdf_db, cut=None):
     return np.array(lratios)
 
 
-def plot(tl_ratios, db_ratios, suffix='', show=False):
+def plot(tl_ratios, db_ratios, suffix='', bins=100, plot_sl=True, show=False):
     '''Plot the distributions of the likelihood ratios for Tl and DBD events.
 
     Creates "figures/lratios[suffix].pdf".
@@ -108,6 +108,8 @@ def plot(tl_ratios, db_ratios, suffix='', show=False):
     :param tl_ratios: List of L ratios for Tl events
     :param db_ratios: List of L ratios for 0vbb events
     :param suffix: String appended to output filename
+    :param bins: Number of bins in histogram
+    :params plot_sl: Also plot sacrifice and leakage
     :param show: If True, show the plot interactively
     '''
     import matplotlib
@@ -115,17 +117,74 @@ def plot(tl_ratios, db_ratios, suffix='', show=False):
     from matplotlib import pyplot as plt
     f = plt.figure(1, facecolor='white')
 
-    b_tl, e_tl = np.histogram(tl_ratios, bins=100, normed=True)
-    b_dbd, e_dbd = np.histogram(db_ratios, bins=100, normed=True)
+    r = (min(min(tl_ratios), min(db_ratios)), max(max(tl_ratios), max(db_ratios)))
+
+    b_tl, e_tl = np.histogram(tl_ratios, bins=bins, range=r, normed=True)
+    b_dbd, e_dbd = np.histogram(db_ratios, bins=bins, range=r, normed=True)
 
     plt.bar(e_tl[:-1], b_tl, alpha=0.5, color='blue', linewidth=0, width=np.diff(e_tl), label='$^{208}$Tl MC')
-    plt.bar(e_dbd[:-1], b_dbd, alpha=0.5, color='red', linewidth=0, width=np.diff(e_tl), label='$0\\nu\\beta\\beta$ MC')
+    plt.bar(e_dbd[:-1], b_dbd, alpha=0.5, color='red', linewidth=0, width=np.diff(e_dbd), label='$0\\nu\\beta\\beta$ MC')
 
     plt.xlabel('$\Delta$')
-    plt.ylabel('Probability')
+    plt.ylabel('Normalized counts per bin')
     plt.legend(loc='upper left')
     f.savefig('figures/lratio%s.pdf' % suffix)
 
     if show:
         plt.show()
+
+    plt.clf()
+
+    if plot_sl:
+        tl = np.empty(shape=(len(b_tl), 2))
+        tl[:,0] = e_tl[:-1]
+        tl[:,1] = b_tl
+        db = np.empty(shape=(len(b_dbd), 2))
+        db[:,0] = e_dbd[:-1]
+        db[:,1] = b_dbd
+
+        plot_sacrifice_leakage(tl, db, suffix, show)
+
+def plot_sacrifice_leakage(tl_delta, db_delta, suffix='', show=False):
+    '''Plot sacrifice and leakage.
+
+    Creates "figures/sacrifice_leakage[suffix].pdf".
+
+    :param tl_delta: L ratio distribution for Tl events
+    :param db_delta: L ratio distribution for 0vbb events
+    :param suffix: String appended to output filename
+    :param show: If True, show the plot interactively
+    :returns: ([cut values], [sacrifice], [leakage]) tuple of lists
+    '''
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
+
+    sacrifice = []
+    leakage = []
+
+    print tl_delta
+
+    for cut in tl_delta[:,0]:
+        e_cut_bin = np.abs(tl_delta[:,0]-cut).argmin()
+        d_cut_bin = np.abs(db_delta[:,0]-cut).argmin()
+        sacrifice.append(np.sum(tl_delta[:,1][:e_cut_bin]*np.diff(tl_delta[:,0])[:e_cut_bin]) / np.sum(tl_delta[:,1][:-1]*np.diff(tl_delta[:,0])))
+        leakage.append(1.0 - np.sum(db_delta[:,1][:d_cut_bin]*np.diff(db_delta[:,0])[:d_cut_bin]) / np.sum(db_delta[:,1][:-1]*np.diff(db_delta[:,0])))
+
+    f = plt.figure(1, facecolor='white')
+
+    plt.plot(tl_delta[:,0], sacrifice, linewidth=2, color='red', label='Sacrifice')
+    plt.plot(tl_delta[:,0], leakage, linewidth=2, color='blue', label='Leakage')
+
+    plt.xlabel('$\Delta_c$')
+    plt.ylabel('Ratio')
+    plt.legend(loc='upper left')
+    f.savefig('figures/sacrifice_leakage%s.pdf' % suffix)
+
+    if show:
+        plt.show()
+
+    plt.clf()
+
+    return tl_delta[:,0], sacrifice, leakage
 

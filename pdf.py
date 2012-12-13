@@ -152,15 +152,20 @@ def phat(x, data):
     #p = [phat(xx, res) for xx in x]
 
 
-def rebin(a, factor):
+def rebin(a, factor, trim=False):
     '''Combine adjacent array elements.
 
     :param a: The array
     :param factor: Number of adjacent elements to combine
+    :param trim: If True, trim elements off the end to make length divide by
+                 factor evenly.
     :returns: array, shorter by a factor or factor
     '''
+    if trim:
+        a = a[:len(a)-len(a)%factor]
+
     if not len(a) % factor == 0:
-        raise Exception('Array length must be evenly divisible by factor')
+            raise Exception('Array length must be evenly divisible by factor')
 
     rebinned = [1.0/factor * np.sum(a[i:i+factor]) for i in range(0, len(a)-1, factor)]
 

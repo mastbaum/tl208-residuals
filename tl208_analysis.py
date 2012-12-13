@@ -42,7 +42,13 @@ class LRF:
         return lratio.extract(filename, pdf_tl=self.pdf_tl, pdf_db=self.pdf_db, cut=self.cut)
 
 
-def main(cut_list, nprocs=2):
+def main(cut_list, nprocs=2, rebin_factor=6):
+    '''Perform likelihood ratio analysis for several cuts.
+
+    :param cuts: List of Cut instances with cuts for whih to perform analysis
+    :param nprocs: Number of parallel processes to launch
+    :param rebin_factor: Factor by which to rebin PDFs
+    '''
     for cut in cut_list:
         suffix = cut.as_suffix()
 
@@ -67,6 +73,15 @@ def main(cut_list, nprocs=2):
                 pickle.dump(pdf_db, f)
             pdf.plot(pdf_db, cut=cut, suffix='_dbd'+suffix)
 
+        # rebin
+        pdf_tl_x = pdf.rebin(pdf_tl[:,0], rebin_factor)
+        pdf_tl_y = pdf.rebin(pdf_tl[:,1], rebin_factor)
+        pdf_tl = np.array((pdf_tl_x, pdf_tl_y))
+
+        pdf_db_x = pdf.rebin(pdf_db[:,0], rebin_factor)
+        pdf_db_y = pdf.rebin(pdf_db[:,1], rebin_factor)
+        pdf_db = np.array((pdf_db_x, pdf_db_y))
+
         # evaluate likelihood ratios
         p = multiprocessing.Pool(nprocs)
         lrf = LRF(pdf_tl, pdf_db, cut)
@@ -85,10 +100,10 @@ def main(cut_list, nprocs=2):
 
 if __name__ == '__main__':
     cut_list = [
-        util.Cut(e=(2,3), r=(5100,5200), t=(-50,50)),
-        util.Cut(e=(2,3), r=(5200,5300), t=(-50,50)),
-        util.Cut(e=(2,3), r=(5300,5400), t=(-50,50)),
         util.Cut(e=(2,3), r=(5400,5500), t=(-50,50)),
+        util.Cut(e=(2,3), r=(5300,5400), t=(-50,50)),
+        util.Cut(e=(2,3), r=(5200,5300), t=(-50,50)),
+        util.Cut(e=(2,3), r=(5100,5200), t=(-50,50)),
         util.Cut(e=(2,3), r=(0,4000), t=(-50,50)),
         util.Cut(e=(2,3), r=(0,4500), t=(-50,50)),
         util.Cut(e=(2,3), r=(0,5000), t=(-50,50))

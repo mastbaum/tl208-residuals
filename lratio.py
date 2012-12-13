@@ -11,8 +11,8 @@ av_outer_r = 6060.4
 
 
 def evaluate_pdf(samples, pdf):
-    edges = pdf[:,0]
-    bins = pdf[:,1]
+    edges = pdf[0]
+    bins = pdf[1]
     widths = np.diff(edges)
     d = np.digitize(samples, edges)
     d = d[d < len(widths)]

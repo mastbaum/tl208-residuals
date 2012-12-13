@@ -152,6 +152,21 @@ def phat(x, data):
     #p = [phat(xx, res) for xx in x]
 
 
+def rebin(a, factor):
+    '''Combine adjacent array elements.
+
+    :param a: The array
+    :param factor: Number of adjacent elements to combine
+    :returns: array, shorter by a factor or factor
+    '''
+    if not len(a) % factor == 0:
+        raise Exception('Array length must be evenly divisible by factor')
+
+    rebinned = [1.0/factor * np.sum(a[i:i+factor]) for i in range(0, len(a)-1, factor)]
+
+    return np.array(rebinned)
+
+
 class ERF:
     def __init__(self, cut=None):
         self.cut = (cut if cut is not None else util.Cut())

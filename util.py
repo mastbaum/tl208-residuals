@@ -21,7 +21,7 @@ class Cut:
     def as_suffix(self):
         '''A short string representation.
 
-        E.g. "_0.0-10.0_0.0-10000.0_-500.0-500.0"
+        E.g. ``_0.0-10.0_0.0-10000.0_-500.0-500.0``
 
         :returns: Cut as a string
         '''

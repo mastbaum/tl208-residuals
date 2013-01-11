@@ -117,6 +117,10 @@ def plot(tl_ratios, db_ratios, suffix='', bins=100, plot_sl=True, show=False):
     from matplotlib import pyplot as plt
     f = plt.figure(1, facecolor='white')
 
+    if len(tl_ratios) == 0 or len(db_ratios) == 0:
+        print 'warning: cannot plot with no likelihood ratios'
+        return
+
     r = (min(min(tl_ratios), min(db_ratios)), max(max(tl_ratios), max(db_ratios)))
 
     b_tl, e_tl = np.histogram(tl_ratios, bins=bins, range=r, normed=True)
@@ -143,7 +147,7 @@ def plot(tl_ratios, db_ratios, suffix='', bins=100, plot_sl=True, show=False):
         db[:,0] = e_dbd[:-1]
         db[:,1] = b_dbd
 
-        plot_sacrifice_leakage(tl, db, suffix, show)
+        return plot_sacrifice_leakage(tl, db, suffix, show)
 
 def plot_sacrifice_leakage(tl_delta, db_delta, suffix='', show=False):
     '''Plot sacrifice and leakage.
@@ -163,28 +167,76 @@ def plot_sacrifice_leakage(tl_delta, db_delta, suffix='', show=False):
     sacrifice = []
     leakage = []
 
-    print tl_delta
-
     for cut in tl_delta[:,0]:
         e_cut_bin = np.abs(tl_delta[:,0]-cut).argmin()
         d_cut_bin = np.abs(db_delta[:,0]-cut).argmin()
-        sacrifice.append(np.sum(tl_delta[:,1][:e_cut_bin]*np.diff(tl_delta[:,0])[:e_cut_bin]) / np.sum(tl_delta[:,1][:-1]*np.diff(tl_delta[:,0])))
-        leakage.append(1.0 - np.sum(db_delta[:,1][:d_cut_bin]*np.diff(db_delta[:,0])[:d_cut_bin]) / np.sum(db_delta[:,1][:-1]*np.diff(db_delta[:,0])))
+        leakage.append(1.0-np.sum(tl_delta[:,1][:e_cut_bin]*np.diff(tl_delta[:,0])[:e_cut_bin]) / np.sum(tl_delta[:,1][:-1]*np.diff(tl_delta[:,0])))
+        sacrifice.append(np.sum(db_delta[:,1][:d_cut_bin]*np.diff(db_delta[:,0])[:d_cut_bin]) / np.sum(db_delta[:,1][:-1]*np.diff(db_delta[:,0])))
 
     f = plt.figure(1, facecolor='white')
 
-    plt.plot(tl_delta[:,0], sacrifice, linewidth=2, color='red', label='Sacrifice')
-    plt.plot(tl_delta[:,0], leakage, linewidth=2, color='blue', label='Leakage')
+    sacrifice = np.array(sacrifice)
+    leakage = np.array(leakage)
+
+    plt.plot(tl_delta[:,0], sacrifice, linewidth=2, linestyle='--',color='red', label='Sacrifice')
+    plt.plot(tl_delta[:,0], leakage, linewidth=2, linestyle='-.', color='blue', label='Leakage')
+
+    # 0vbb sensitivity
+    sr = [(1.0-sacrifice[i])/np.sqrt(39.8+1000*(leakage[i]))/(1.0/np.sqrt(39.8+1000)) for i in range(len(tl_delta[:,0]))]
+    delta_c = tl_delta[:,0][np.argmax(sr)]
+    plt.plot(tl_delta[:,0], sr, linewidth=3, color='black', label='Relative $T^{1/2}_{0\\nu\\beta\\beta}$')
+    plt.axvline(x=delta_c, color='black', label='$\Delta_c=%1.4f$' % delta_c)
+    print 'delta_c:', delta_c
+    print 'sacrifice:', sacrifice[np.argmax(sr)]
+    print 'leakage:', leakage[np.argmax(sr)]
 
     plt.xlabel('$\Delta_c$')
     plt.ylabel('Ratio')
-    plt.legend(loc='upper left')
+    plt.legend(loc='lower left')
+    plt.grid(True)
     f.savefig('figures/sacrifice_leakage%s.pdf' % suffix)
 
     if show:
         plt.show()
+        raw_input()
 
     plt.clf()
 
     return tl_delta[:,0], sacrifice, leakage
+
+
+def plot_sensitivity(cut_list, years=4.339):
+    r, nevents = util.calculate_fiducial_cut(cut_list, years)
+
+    for cut in cut_list:
+        try:
+            with open('lratios/lratio%s' % cut.as_suffix()) as f:
+                lr = pickle.load(f)
+        except IOError:
+            print 'warning: could not load l ratios from lrations/lratio%s' % cut.as_suffix()
+            continue
+
+        tl_ratios = lr['tl208']
+        db_ratios = lr['dbd']
+
+        if len(tl_ratios) == 0 or len(db_ratios) == 0:
+            print 'warning: cannot plot with no likelihood ratios'
+            continue
+
+        r = (min(min(tl_ratios), min(db_ratios)), max(max(tl_ratios), max(db_ratios)))
+
+        b_tl, e_tl = np.histogram(tl_ratios, bins=bins, range=r, normed=True)
+        b_dbd, e_dbd = np.histogram(db_ratios, bins=bins, range=r, normed=True)
+
+        tl = np.empty(shape=(len(b_tl), 2))
+        tl[:,0] = e_tl[:-1]
+        tl[:,1] = b_tl
+        db = np.empty(shape=(len(b_dbd), 2))
+        db[:,0] = e_dbd[:-1]
+        db[:,1] = b_dbd
+
+        x, sacrifice, leakage = plot_sacrifice_leakage(tl, db, cut.as_suffix())
+
+        sr = [(1.0-sacrifice[i])/np.sqrt(39.8+268*(1.0-leakage[i]))/(1.0/np.sqrt(39.8+268)) for i in range(len(tl_delta[:,0]))]
+        delta_c = tl_delta[:,0][np.argmax(sr)]
 

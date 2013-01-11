@@ -102,8 +102,7 @@ def plot(pdf, nevents=None, show=False, cut=None, suffix=''):
 
     Creates "figures/pdf[suffix].pdf".
 
-    :param h: Bin values
-    :param e: Bin locations
+    :param pdf: PDF as ndarray
     :param nevents: Number of events (for display only)
     :param show: If True, show the plot interactively
     :param suffix: Appended to the written PDF filename
@@ -115,7 +114,11 @@ def plot(pdf, nevents=None, show=False, cut=None, suffix=''):
     if cut is None:
         cut = util.Cut()
 
-    e, h = zip(*pdf)
+    e, h = pdf[0], np.array(pdf[1])
+
+    if np.isnan(h).any():
+        print 'warning: cannot plot l ratio containing nans'
+        return
 
     f = plt.figure(1, facecolor='white')
     label = ('MC (%i events)' % nevents) if nevents is not None else 'MC'
@@ -204,6 +207,13 @@ def make(filenames, nprocs, cut):
     print 'total events:', total_events.value
     print 'events reconstructed:', events_reconstructed.value
     print 'events passing cuts:', events_passing_cuts.value
+
+    with open('event_counts.txt', 'a') as f:
+        f.write('%s %s %s  %i  %i %i %i\n' % (str(cut.e), str(cut.r), str(cut.r),
+                                            len(res),
+                                            total_events.value,
+                                            events_reconstructed.value,
+                                            events_passing_cuts.value))
 
     return pdf
 
